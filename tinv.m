@@ -1,14 +1,13 @@
-function trank = tubalrank(X,tol)
+function invX = tinv(X)
 
-% The tensor tubal rank of a 3 way tensor
+% tinv(X) is the inverse of the tensor X of size n*n*n3.
+%   A warning message is printed if X is badly scaled or
+%   nearly singular.
 %
-% X     -    n1*n2*n3 tensor
-% trank -    tensor tubal rank of X
-%
-% version 2.0 - 14/06/2018
+% version 1.0 - 14/06/2018
 %
 % Written by Canyi Lu (canyilu@gmail.com)
-%
+% 
 %
 % References: 
 % Canyi Lu, Tensor-Tensor Product Toolbox. Carnegie Mellon University. 
@@ -19,25 +18,26 @@ function trank = tubalrank(X,tol)
 % Norm, arXiv preprint arXiv:1804.03728, 2018
 %
 
-X = fft(X,[],3);
 [n1,n2,n3] = size(X);
-s = zeros(min(n1,n2),1);
+if n1 ~= n2
+    error('Error using tinv. Tensor must be square.');
+end
 
-% i=1
-s = s + svd(X(:,:,1),'econ');
+X = fft(X,[],3);
+invX = zeros(n1,n2,n3);
+I = eye(n1);
+% first frontal slice
+invX(:,:,1) = X(:,:,1)\I;
 % i=2,...,halfn3
 halfn3 = round(n3/2);
 for i = 2 : halfn3
-    s = s + svd(X(:,:,i),'econ')*2;
+    invX(:,:,i) = X(:,:,i)\I;
+    invX(:,:,n3+2-i) = conj(invX(:,:,i));
 end
 % if n3 is even
 if mod(n3,2) == 0
     i = halfn3+1;
-    s = s + svd(X(:,:,i),'econ');
+    invX(:,:,i) = X(:,:,i)\I;
 end
-s = s/n3;
+invX = ifft(invX,[],3);
 
-if nargin==1
-   tol = max(n1,n2) * eps(max(s));
-end
-trank = sum(s > tol);

@@ -1,14 +1,14 @@
-function trank = tubalrank(X,tol)
+function tnn = tnn(X)
 
-% The tensor tubal rank of a 3 way tensor
+% Tensor nuclear norm of a 3 way tensor
 %
-% X     -    n1*n2*n3 tensor
-% trank -    tensor tubal rank of X
+% X     - n1*n2*n3 tensor
+% tnn   - tensor nuclear norm
 %
-% version 2.0 - 14/06/2018
+% version 2.0 - 09/10/2017
 %
 % Written by Canyi Lu (canyilu@gmail.com)
-%
+% 
 %
 % References: 
 % Canyi Lu, Tensor-Tensor Product Toolbox. Carnegie Mellon University. 
@@ -19,25 +19,25 @@ function trank = tubalrank(X,tol)
 % Norm, arXiv preprint arXiv:1804.03728, 2018
 %
 
+n3 = size(X,3);
 X = fft(X,[],3);
-[n1,n2,n3] = size(X);
-s = zeros(min(n1,n2),1);
+tnn = 0;
 
 % i=1
-s = s + svd(X(:,:,1),'econ');
+s = svd(X(:,:,1),'econ');
+tnn = tnn+sum(s);
+
 % i=2,...,halfn3
 halfn3 = round(n3/2);
 for i = 2 : halfn3
-    s = s + svd(X(:,:,i),'econ')*2;
+    s = svd(X(:,:,i),'econ');
+    tnn = tnn+sum(s)*2;
 end
+
 % if n3 is even
 if mod(n3,2) == 0
     i = halfn3+1;
-    s = s + svd(X(:,:,i),'econ');
+    s = svd(X(:,:,i),'econ');
+    tnn = tnn+sum(s);
 end
-s = s/n3;
-
-if nargin==1
-   tol = max(n1,n2) * eps(max(s));
-end
-trank = sum(s > tol);
+tnn = tnn/n3;
